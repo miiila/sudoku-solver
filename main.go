@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strings"
 	"sudoku-solver/grid"
 	"sudoku-solver/recursivesolver"
+	"sudoku-solver/routinessolver"
+	"sudoku-solver/sudokusolver"
+	"time"
 )
 
 type sudoku = grid.Sudoku
@@ -19,61 +21,31 @@ func main() {
 	f, _ := os.Open("sudoku.txt")
 	s := bufio.NewScanner(f)
 
-	var p ProjectEulerSudokuSolver
-	p.inputs = p.parse(s)
-	p.solver = recursivesolver.RecursiveSolver{}
+	var p sudokusolver.ProjectEulerSudokuSolver
+    p.Inputs = p.Parse(s, ratio, gridsInTxt, amount)
+	p.Solver = recursivesolver.RecursiveSolver{}
+	startTime := time.Now()
+	res := p.SolveIteratively()
+	endTime := time.Now()
+	diff := endTime.Sub(startTime)
+	fmt.Printf("RecursiveSolver iteratively - %d in %f seconds\n", res, diff.Seconds())
+	startTime = time.Now()
+	res = p.SolveConcurrently()
+	endTime = time.Now()
+	diff = endTime.Sub(startTime)
+	fmt.Printf("RecursiveSolver concurrently - %d in %f seconds\n", res, diff.Seconds())
 
-	fmt.Println(p.solve())
-}
+	p.Solver = routinessolver.RoutinesSolver{}
+	startTime = time.Now()
+	res = p.SolveIteratively()
+	endTime = time.Now()
+	diff = endTime.Sub(startTime)
 
-type ProjectEulerInputParser interface {
-	Parse(*bufio.Scanner) [amount]sudoku
-}
+	fmt.Printf("RoutinesSolver iteratively - %d in %f seconds\n", res, diff.Seconds())
+	startTime = time.Now()
+	res = p.SolveConcurrently()
+	endTime = time.Now()
+	diff = endTime.Sub(startTime)
 
-type ProjectEulerSudokuSolver struct {
-	inputs [amount]sudoku
-	solver SudokuSolver
-}
-
-type SudokuSolver interface {
-	Solve(s sudoku) sudoku
-}
-
-func (p ProjectEulerSudokuSolver) parse(scanner *bufio.Scanner) [amount]sudoku {
-	i := -1
-	var j int
-	var inputs [amount]sudoku
-	var s sudoku
-	for scanner.Scan() {
-		t := scanner.Text()
-		if strings.Contains(t, "Grid") {
-			if i > -1 {
-				for k := 0; k < ratio; k++ {
-					inputs[i+(gridsInTxt*k)] = s
-				}
-			}
-			i++
-			j = 0
-			continue
-		}
-		for k, v := range t {
-			s[j][k] = int(v - '0')
-		}
-		j++
-	}
-	for k := 0; k < amount/gridsInTxt; k++ {
-		inputs[i+(gridsInTxt*k)] = s
-	}
-
-	return inputs
-}
-
-func (p ProjectEulerSudokuSolver) solve() int {
-	var res int
-	for _, s := range p.inputs {
-		solved := p.solver.Solve(s)
-		res += solved[0][0]*100 + solved[0][1]*10 + solved[0][2]
-	}
-
-	return res
+	fmt.Printf("RoutinesSolver concurrently - %d in %f seconds\n", res, diff.Seconds())
 }

@@ -2,20 +2,28 @@ package recursivesolver
 
 import (
 	"sudoku-solver/grid"
+	"sync"
 )
 
 type sudoku = grid.Sudoku
 
 type RecursiveSolver struct{}
 
+var numbers = [9]int{1, 2, 3, 4, 5, 6, 7, 8, 9}
 func (rs RecursiveSolver) Solve(s sudoku) sudoku {
-	numbers := [9]int{1, 2, 3, 4, 5, 6, 7, 8, 9}
-	grid, _ := solve(s, numbers)
+	grid, _ := solve(s)
 
 	return grid
 }
 
-func solve(s sudoku, numbers [9]int) (sudoku, bool) {
+func (rs RecursiveSolver) SolveConcurrently(s sudoku, wg *sync.WaitGroup, res chan sudoku) {
+	grid, _ := solve(s)
+
+	res <- grid
+	wg.Done()
+}
+
+func solve(s sudoku) (sudoku, bool) {
 	nextCell, solved := grid.GetNextEmptyCell(s)
 	if solved {
 		return s, true
@@ -24,7 +32,7 @@ func solve(s sudoku, numbers [9]int) (sudoku, bool) {
 	for _, v := range numbers {
 		if grid.IsNumOK(s, v, nextCell) {
 			s[nextCell.Row][nextCell.Col] = v
-			g, solved := solve(s, numbers)
+			g, solved := solve(s)
 			if solved {
 				return g, true
 			}
@@ -32,5 +40,4 @@ func solve(s sudoku, numbers [9]int) (sudoku, bool) {
 	}
 
 	return s, false
-
 }
