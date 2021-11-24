@@ -15,37 +15,24 @@ type sudoku = grid.Sudoku
 
 const gridsInTxt = 50
 const amount = 1000
-const ratio = amount / gridsInTxt
 
 func main() {
 	f, _ := os.Open("sudoku.txt")
 	s := bufio.NewScanner(f)
 
 	var p sudokusolver.ProjectEulerSudokuSolver
-    p.Inputs = p.Parse(s, ratio, gridsInTxt, amount)
+	p.Inputs = p.Parse(s, gridsInTxt, amount)
 	p.Solver = recursivesolver.RecursiveSolver{}
-	startTime := time.Now()
-	res := p.SolveIteratively()
-	endTime := time.Now()
-	diff := endTime.Sub(startTime)
-	fmt.Printf("RecursiveSolver iteratively - %d in %f seconds\n", res, diff.Seconds())
-	startTime = time.Now()
-	res = p.SolveConcurrently()
-	endTime = time.Now()
-	diff = endTime.Sub(startTime)
-	fmt.Printf("RecursiveSolver concurrently - %d in %f seconds\n", res, diff.Seconds())
+	run(p.SolveIteratively, "RecursiveSolver iteratively - %d in %f seconds\n")
+	run(p.SolveConcurrently, "RecursiveSolver concurrently - %d in %f seconds\n")
 
 	p.Solver = routinessolver.RoutinesSolver{}
-	startTime = time.Now()
-	res = p.SolveIteratively()
-	endTime = time.Now()
-	diff = endTime.Sub(startTime)
+	run(p.SolveIteratively, "RoutinesSolver iteratively - %d in %f seconds\n")
+	run(p.SolveConcurrently, "RoutinesSolver concurrently - %d in %f seconds\n")
+}
 
-	fmt.Printf("RoutinesSolver iteratively - %d in %f seconds\n", res, diff.Seconds())
-	startTime = time.Now()
-	res = p.SolveConcurrently()
-	endTime = time.Now()
-	diff = endTime.Sub(startTime)
-
-	fmt.Printf("RoutinesSolver concurrently - %d in %f seconds\n", res, diff.Seconds())
+func run(solver func() int, msg string) {
+	start := time.Now()
+	res := solver()
+	fmt.Printf(msg, res, time.Since(start).Seconds())
 }

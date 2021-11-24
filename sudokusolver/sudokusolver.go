@@ -23,10 +23,11 @@ type SudokuSolver interface {
 	SolveConcurrently(s sudoku, wg *sync.WaitGroup, res chan sudoku)
 }
 
-func (p ProjectEulerSudokuSolver) Parse(scanner *bufio.Scanner, ratio int, gridsInTxt int, amount int) []sudoku {
+func (p ProjectEulerSudokuSolver) Parse(scanner *bufio.Scanner, gridsInTxt int, amount int) []sudoku {
+	ratio := amount / gridsInTxt
 	i := -1
 	var j int
-	var inputs  = make([]sudoku, amount)
+	var inputs = make([]sudoku, amount)
 	var s sudoku
 	for scanner.Scan() {
 		t := scanner.Text()
